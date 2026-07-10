@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 
 from database.engine import async_session
 from database.crud import get_user
-from keyboards.menus import pay_keyboard, banned_keyboard
+from keyboards.common import pay_keyboard, banned_keyboard
 
 
 class SubscriptionMiddleware(BaseMiddleware):
@@ -12,7 +12,7 @@ class SubscriptionMiddleware(BaseMiddleware):
     PROTECTED_CALLBACKS = (
         "section:", "topic:", "page:",
         "questions:", "question:", "sources:",
-        "profile", "withdraw:"
+        "profile", "referral", "withdraw:"
     )
 
     async def __call__(

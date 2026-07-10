@@ -25,7 +25,9 @@ async def set_setting(session: AsyncSession, key: str, value: str) -> None:
 
 async def is_referral_enabled(session: AsyncSession) -> bool:
     value = await get_setting(session, "referral_enabled")
-    return value == "true"
+    # По умолчанию реферальная система включена.
+    # Если админ явно выключил её через админку, в БД будет "false".
+    return value != "false"
 
 
 async def get_referral_reward(session: AsyncSession) -> int:

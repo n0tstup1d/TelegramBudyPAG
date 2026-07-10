@@ -96,12 +96,10 @@ class WithdrawalRequest(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(16), default="pending")
-    requested_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    status: Mapped[str] = mapped_column(String(16), default="pending")
     taken_by: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     requested_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
 
 class Setting(Base):
     __tablename__ = "settings"

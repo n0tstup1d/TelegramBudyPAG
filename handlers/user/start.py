@@ -6,34 +6,16 @@ from sqlalchemy import select
 from database.crud import get_user, create_user, agree_to_terms
 from database.engine import async_session
 from database.models import User
-from database.settings import is_referral_enabled
 from keyboards.common import (
-    TEST_NOTICE,
+    SUBSCRIPTION_REQUIRED_TEXT,
     terms_keyboard,
     pay_keyboard,
-    bottom_keyboard,
     banned_keyboard,
-    support_keyboard,
 )
-from keyboards.user.main import main_menu
 from utils.notifications import notify_new_user
+from services.navigation import send_home, edit_home, send_support_center
 
 router = Router()
-
-
-async def get_main_menu_markup():
-    async with async_session() as session:
-        referral_enabled = await is_referral_enabled(session)
-    return main_menu(referral_enabled=referral_enabled)
-
-
-async def send_user_home(message: Message) -> None:
-    """Отправляет нижнюю навигацию и чистое главное меню."""
-    await message.answer(TEST_NOTICE, reply_markup=bottom_keyboard())
-    await message.answer(
-        "👋 Выбери направление:",
-        reply_markup=await get_main_menu_markup(),
-    )
 
 
 @router.message(CommandStart())
@@ -94,14 +76,12 @@ async def cmd_start(message: Message):
 
         elif not user.has_subscription:
             await message.answer(
-                "🔒 Для доступа к материалам необходима подписка.\n\n"
-                "Стоимость: 500 ₽ (разово, навсегда)\n\n"
-                "После оплаты получаешь полный доступ ко всем материалам без ограничений.",
+                SUBSCRIPTION_REQUIRED_TEXT,
                 reply_markup=pay_keyboard()
             )
 
         else:
-            await send_user_home(message)
+            await send_home(message, with_notice=True)
 
 
 @router.callback_query(F.data == "terms:accept")
@@ -111,19 +91,21 @@ async def accept_terms(callback: CallbackQuery):
         user = await get_user(session, callback.from_user.id)
 
         if user.has_subscription:
-            await callback.message.answer(TEST_NOTICE, reply_markup=bottom_keyboard())
-            await callback.message.edit_text(
-                "👋 Добро пожаловать! Выбери направление:",
-                reply_markup=main_menu(referral_enabled=await is_referral_enabled(session))
-            )
+            await send_home(callback.message, with_notice=True, text="👋 Добро пожаловать! Выбери направление:")
         else:
             await callback.message.edit_text(
-                "✅ Соглашение принято!\n\n"
-                "🔒 Для доступа к материалам необходима подписка.\n\n"
-                "Стоимость: 500 ₽ (разово, навсегда)",
+                "✅ Соглашение принято!\n\n" + SUBSCRIPTION_REQUIRED_TEXT,
                 reply_markup=pay_keyboard()
             )
     await callback.answer()
+
+
+@router.callback_query(F.data == "pay")
+async def pay_stub(callback: CallbackQuery):
+    await callback.answer(
+        "Сейчас идёт закрытое тестирование. Доступ выдаётся администратором вручную.",
+        show_alert=True,
+    )
 
 
 @router.callback_query(F.data == "terms:decline")
@@ -137,25 +119,20 @@ async def decline_terms(callback: CallbackQuery):
 
 @router.callback_query(F.data == "back:main")
 async def back_to_main(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "👋 Выбери направление:",
-        reply_markup=await get_main_menu_markup()
-    )
+    await edit_home(callback)
     await callback.answer()
 
 
-@router.message(F.text == "🏠 Главное меню")
+@router.message(F.text.in_({"🏠 Главное меню", "🏠 Меню"}))
 async def bottom_main_menu(message: Message):
-    await message.answer(
-        "👋 Выбери направление:",
-        reply_markup=await get_main_menu_markup()
-    )
+    await send_home(message)
 
 
-@router.message(F.text == "🛠 Тех. поддержка")
+@router.message(F.text.in_({"🛠 Тех. поддержка", "🛠 Поддержка"}))
 async def support(message: Message):
-    await message.answer(
-        "📬 Контакты\n\n"
-        "Выбери, куда обратиться:",
-        reply_markup=support_keyboard()
-    )
+    await send_support_center(message)
+
+
+@router.callback_query(F.data == "noop")
+async def noop(callback: CallbackQuery):
+    await callback.answer()

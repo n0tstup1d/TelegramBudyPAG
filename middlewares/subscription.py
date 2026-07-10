@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 
 from database.engine import async_session
 from database.crud import get_user
-from keyboards.common import pay_keyboard, banned_keyboard
+from keyboards.common import pay_keyboard, banned_keyboard, SUBSCRIPTION_REQUIRED_TEXT
 
 
 class SubscriptionMiddleware(BaseMiddleware):
@@ -57,8 +57,7 @@ class SubscriptionMiddleware(BaseMiddleware):
                         show_alert=True
                     )
                     await event.message.answer(
-                        "🔒 Для доступа к материалам необходима подписка.\n\n"
-                        "Стоимость: 500 ₽ (разово, навсегда)",
+                        SUBSCRIPTION_REQUIRED_TEXT,
                         reply_markup=pay_keyboard()
                     )
                     return

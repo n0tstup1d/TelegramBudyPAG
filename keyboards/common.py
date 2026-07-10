@@ -3,8 +3,15 @@ from config import SUPPORT_URL, PARTNERSHIP_URL, CONTENT_URL
 
 
 TEST_NOTICE = (
-    "⚠️ Бот работает в тестовом режиме.\n"
-    "Если что-то работает не так — нажми «🛠 Тех. поддержка» снизу."
+    "⚠️ Бот работает в режиме закрытого тестирования.\n"
+    "Если что-то работает не так — нажми «🛠 Поддержка» снизу."
+)
+
+
+SUBSCRIPTION_REQUIRED_TEXT = (
+    "🔒 Доступ к материалам открыт только участникам закрытого тестирования.\n\n"
+    "Чтобы попасть внутрь, нужно принять соглашение и получить подписку. "
+    "На время теста доступ выдаётся администратором вручную."
 )
 
 
@@ -16,8 +23,8 @@ def bottom_keyboard() -> ReplyKeyboardMarkup:
     """
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🏠 Главное меню")],
-            [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="🛠 Тех. поддержка")],
+            [KeyboardButton(text="🏠 Меню")],
+            [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="🛠 Поддержка")],
         ],
         resize_keyboard=True,
         persistent=True,
@@ -36,7 +43,7 @@ def terms_keyboard() -> InlineKeyboardMarkup:
 def pay_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💳 Оплатить", callback_data="pay")],
-        [InlineKeyboardButton(text="💬 Проблемы с оплатой?", url=SUPPORT_URL)],
+        [InlineKeyboardButton(text="💬 Получить доступ / поддержка", url=SUPPORT_URL)],
     ])
 
 
@@ -47,9 +54,17 @@ def banned_keyboard() -> InlineKeyboardMarkup:
 
 
 def support_keyboard() -> InlineKeyboardMarkup:
-    """Контакты спрятаны за одним осознанным действием — без перегруза главного меню."""
+    """Внутренний центр обращений: пользователь пишет в бот, команда отвечает от лица проекта."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🛠 Тех. поддержка", url=SUPPORT_URL)],
-        [InlineKeyboardButton(text="❓ Вопрос по контенту", url=CONTENT_URL)],
-        [InlineKeyboardButton(text="🤝 Реклама и сотрудничество", url=PARTNERSHIP_URL)],
+        [InlineKeyboardButton(text="🛠 Написать в поддержку", callback_data="support:start:tech")],
+        [InlineKeyboardButton(text="❓ Вопрос по контенту", callback_data="support:start:content")],
+        [InlineKeyboardButton(text="🤝 Реклама и партнёрство", url=PARTNERSHIP_URL)],
+        [InlineKeyboardButton(text="🏠 В меню", callback_data="back:main")],
+    ])
+
+
+def support_cancel_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="❌ Завершить обращение", callback_data="support:user_close")],
+        [InlineKeyboardButton(text="🏠 В меню", callback_data="back:main")],
     ])

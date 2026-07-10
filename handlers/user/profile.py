@@ -22,7 +22,7 @@ async def build_profile(user_id: int):
         text = (
             f"👤 Твой профиль\n\n"
             f"📅 С нами с: {created}\n"
-            f"💳 Подписка: {sub_status}"
+            f"🔓 Доступ: {sub_status}"
         )
 
         if referral_on:

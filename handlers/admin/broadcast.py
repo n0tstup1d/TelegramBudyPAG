@@ -14,6 +14,7 @@ from database.engine import async_session
 from database.models import User
 from handlers.admin.guards import is_admin
 from states.admin import BroadcastStates
+from utils.telegram import safe_callback_answer, safe_edit_or_send
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -61,27 +62,12 @@ def build_confirm_keyboard(button_text: str | None, button_url: str | None) -> I
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
-async def safe_answer(callback: CallbackQuery, *args, **kwargs) -> None:
-    try:
-        await callback.answer(*args, **kwargs)
-    except TelegramBadRequest:
-        pass
-
-
-async def safe_edit_or_send(callback: CallbackQuery, text: str, reply_markup: InlineKeyboardMarkup | None = None):
-    """Редактирует текущее сообщение, а если это фото/медиа — отправляет новое."""
-    try:
-        return await callback.message.edit_text(text, reply_markup=reply_markup)
-    except TelegramBadRequest:
-        return await callback.message.answer(text, reply_markup=reply_markup)
-
-
 @router.callback_query(F.data == "admin:broadcast")
 async def admin_broadcast(callback: CallbackQuery, state: FSMContext):
     if not await is_admin(callback.from_user.id):
         return
 
-    await safe_answer(callback)
+    await safe_callback_answer(callback)
     await state.clear()
     await callback.message.edit_text(
         "📢 Рассылка\n\nВыбери аудиторию:",
@@ -94,7 +80,7 @@ async def broadcast_cancel(callback: CallbackQuery, state: FSMContext):
     if not await is_admin(callback.from_user.id):
         return
 
-    await safe_answer(callback, "Рассылка отменена")
+    await safe_callback_answer(callback, "Рассылка отменена")
     await state.clear()
     await safe_edit_or_send(
         callback,
@@ -110,7 +96,7 @@ async def broadcast_audience(callback: CallbackQuery, state: FSMContext):
     if not await is_admin(callback.from_user.id):
         return
 
-    await safe_answer(callback)
+    await safe_callback_answer(callback)
 
     audience = callback.data.split(":", 2)[2]
     if audience not in BROADCAST_AUDIENCE:
@@ -162,7 +148,7 @@ async def broadcast_no_button(callback: CallbackQuery, state: FSMContext):
     if not await is_admin(callback.from_user.id):
         return
 
-    await safe_answer(callback)
+    await safe_callback_answer(callback)
     await state.update_data(button_text=None, button_url=None)
     await show_broadcast_preview(callback, state)
 
@@ -172,7 +158,7 @@ async def broadcast_add_button(callback: CallbackQuery, state: FSMContext):
     if not await is_admin(callback.from_user.id):
         return
 
-    await safe_answer(callback)
+    await safe_callback_answer(callback)
     await state.set_state(BroadcastStates.waiting_button)
     await callback.message.edit_text(
         "Напиши текст кнопки и ссылку через символ |\n\n"
@@ -242,7 +228,7 @@ async def broadcast_send(callback: CallbackQuery, state: FSMContext):
     if not await is_admin(callback.from_user.id):
         return
 
-    await safe_answer(callback, "Рассылка запущена")
+    await safe_callback_answer(callback, "Рассылка запущена")
 
     data = await state.get_data()
     text = data.get("text") or ""

@@ -241,8 +241,7 @@ async def start_support_dialog(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.edit_text(
         f"{label}\n\n"
-        "Напиши сообщение сюда, в чат с ботом.\n"
-        "Команда увидит обращение в отдельной внутренней теме и ответит тебе от лица проекта.",
+        "Напиши сообщение сюда, в чат с ботом.\n",
         reply_markup=support_cancel_keyboard(),
     )
 

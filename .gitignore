@@ -1,6 +1,13 @@
 .env
-.venv/
-.venv312/
-.idea/
+.env.*
+!.env.example
 __pycache__/
-*.pyc
+*.py[cod]
+*.log
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+backups/
+*.dump
+.DS_Store

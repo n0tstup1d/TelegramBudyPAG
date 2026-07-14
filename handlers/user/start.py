@@ -6,6 +6,7 @@ from sqlalchemy import select
 from database.crud import get_user, create_user, agree_to_terms
 from database.engine import async_session
 from database.models import User
+from database.settings import is_referral_enabled
 from keyboards.common import (
     SUBSCRIPTION_REQUIRED_TEXT,
     terms_keyboard,
@@ -14,6 +15,7 @@ from keyboards.common import (
 )
 from utils.notifications import notify_new_user
 from services.navigation import send_home, edit_home, send_support_center
+from services.access import has_access
 
 router = Router()
 
@@ -22,9 +24,13 @@ router = Router()
 async def cmd_start(message: Message):
     async with async_session() as session:
         referred_by = None
+        referral_enabled = await is_referral_enabled(session)
         args = message.text.split()
-        if len(args) > 1:
-            ref_code = args[1]
+        if referral_enabled and len(args) > 1:
+            ref_code = args[1].strip()
+            if ref_code.startswith("ref_"):
+                ref_code = ref_code[4:]
+
             result = await session.execute(
                 select(User).where(User.referral_code == ref_code)
             )
@@ -38,7 +44,7 @@ async def cmd_start(message: Message):
             await message.answer(
                 "🚫 Ваш аккаунт заблокирован.\n\n"
                 "Если считаете это ошибкой — обратитесь в поддержку.",
-                reply_markup=banned_keyboard()
+                reply_markup=banned_keyboard(),
             )
             return
 
@@ -49,35 +55,44 @@ async def cmd_start(message: Message):
                     user_id=message.from_user.id,
                     username=message.from_user.username,
                     full_name=message.from_user.full_name,
-                    referred_by=referred_by
+                    referred_by=referred_by,
                 )
                 await notify_new_user(
                     bot=message.bot,
                     user_id=message.from_user.id,
                     username=message.from_user.username,
                     full_name=message.from_user.full_name,
-                    referred_by=referred_by
+                    referred_by=referred_by,
                 )
             except Exception:
                 user = await get_user(session, message.from_user.id)
 
             await message.answer(
-                "👋 Привет! Я бот по биохакингу.\n\n"
-                "Здесь ты найдёшь научно обоснованные материалы о сне, питании, добавках и восстановлении.\n\n"
-                "Перед началом прочитай пользовательское соглашение.",
-                reply_markup=terms_keyboard()
+                "👋 <b>Добро пожаловать в VEGA!</b>\n\n"
+                "VEGA — пополняемая информационно-образовательная база. Сейчас доступны материалы "
+                "о сне, питании, физической активности, восстановлении, работе мозга, добавках "
+                "и мониторинге показателей.\n\n"
+                "В дальнейшем могут добавляться новые направления: психология, отношения, воспитание детей, "
+                "обучение, продуктивность и практические инструменты для повседневной жизни. "
+                "Будущие разделы не входят в гарантированный объём покупки, пока они не появились в боте.\n\n"
+                "До оплаты можно посмотреть описание продукта, цену, условия доступа, "
+                "публичную оферту, политику обработки данных и реквизиты продавца.\n\n"
+                "Для продолжения ознакомься с офертой и подтверди согласие.",
+                parse_mode="HTML",
+                reply_markup=terms_keyboard(),
             )
 
         elif not user.agreed_to_terms:
             await message.answer(
-                "📋 Для продолжения необходимо принять соглашение.",
-                reply_markup=terms_keyboard()
+                "📋 Для продолжения необходимо ознакомиться с публичной офертой и принять её условия.",
+                reply_markup=terms_keyboard(),
             )
 
-        elif not user.has_subscription:
+        elif not has_access(user):
             await message.answer(
                 SUBSCRIPTION_REQUIRED_TEXT,
-                reply_markup=pay_keyboard()
+                parse_mode="HTML",
+                reply_markup=pay_keyboard(),
             )
 
         else:
@@ -90,28 +105,25 @@ async def accept_terms(callback: CallbackQuery):
         await agree_to_terms(session, callback.from_user.id)
         user = await get_user(session, callback.from_user.id)
 
-        if user.has_subscription:
-            await send_home(callback.message, with_notice=True, text="👋 Добро пожаловать! Выбери направление:")
+        if has_access(user):
+            await send_home(
+                callback.message,
+                with_notice=True,
+                text="👋 Добро пожаловать! Выбери направление:",
+            )
         else:
             await callback.message.edit_text(
-                "✅ Соглашение принято!\n\n" + SUBSCRIPTION_REQUIRED_TEXT,
-                reply_markup=pay_keyboard()
+                "✅ <b>Оферта принята.</b>\n\n" + SUBSCRIPTION_REQUIRED_TEXT,
+                parse_mode="HTML",
+                reply_markup=pay_keyboard(),
             )
     await callback.answer()
-
-
-@router.callback_query(F.data == "pay")
-async def pay_stub(callback: CallbackQuery):
-    await callback.answer(
-        "Сейчас идёт закрытое тестирование. Доступ выдаётся администратором вручную.",
-        show_alert=True,
-    )
 
 
 @router.callback_query(F.data == "terms:decline")
 async def decline_terms(callback: CallbackQuery):
     await callback.message.edit_text(
-        "😔 Без принятия соглашения использование бота невозможно.\n\n"
+        "😔 Без принятия публичной оферты оформить доступ невозможно.\n\n"
         "Если передумаешь — нажми /start"
     )
     await callback.answer()

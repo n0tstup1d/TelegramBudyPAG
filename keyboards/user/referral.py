@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 def make_share_url(ref_link: str, reward: int | None = None) -> str:
     reward_text = f" За регистрацию по ссылке мне начислят {reward} ₽." if reward else ""
     text = (
-        "Привет! Я нашёл полезный бот по биохакингу: сон, питание, добавки и восстановление."
+        "Привет! Я нашёл VEGA — пополняемую базу материалов о здоровье, мышлении, привычках и практических инструментах для жизни."
         f"{reward_text} Заходи по моей ссылке 👇"
     )
     return (

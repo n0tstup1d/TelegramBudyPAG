@@ -1,38 +1,85 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.base import BaseStorage
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import BotCommand
 
-from config import BOT_TOKEN
-from database.engine import engine
+from config import (
+    ALLOW_MEMORY_STORAGE,
+    BOT_TOKEN,
+    DROP_PENDING_UPDATES,
+    REDIS_URL,
+)
+from database.engine import async_session, engine
+from database.settings import apply_security_defaults
+from middlewares.rate_limit import RateLimitMiddleware
 from middlewares.subscription import SubscriptionMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
-async def on_startup(bot: Bot):
+def build_storage() -> BaseStorage:
+    if REDIS_URL:
+        try:
+            from aiogram.fsm.storage.redis import RedisStorage
+        except ImportError as exc:
+            raise RuntimeError(
+                "Задан REDIS_URL, но не установлен пакет redis. Выполните: pip install -r requirements.txt"
+            ) from exc
+        logger.info("FSM storage: Redis")
+        return RedisStorage.from_url(REDIS_URL)
+
+    if not ALLOW_MEMORY_STORAGE:
+        raise RuntimeError(
+            "REDIS_URL не задан, а ALLOW_MEMORY_STORAGE=false. "
+            "Для продакшена настройте Redis, чтобы состояния не терялись после перезапуска."
+        )
+
+    logger.warning(
+        "FSM storage: MemoryStorage. Состояния поддержки и форм будут потеряны после перезапуска. "
+        "Для продакшена задайте REDIS_URL."
+    )
+    return MemoryStorage()
+
+
+async def on_startup(bot: Bot) -> None:
+    async with async_session() as session:
+        changed = await apply_security_defaults(session)
+        if changed:
+            logger.warning("Реферальная система и магазины отключены безопасным обновлением; включаются через /admin")
+
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Открыть VEGA"),
+        BotCommand(command="product", description="Описание продукта"),
+        BotCommand(command="buy", description="Условия покупки"),
+        BotCommand(command="offer", description="Публичная оферта"),
+        BotCommand(command="privacy", description="Обработка данных"),
+        BotCommand(command="seller", description="Реквизиты и поддержка"),
+    ])
     logger.info("Бот запущен")
 
 
-async def on_shutdown(bot: Bot):
-    logger.info("Бот остановлен")
-    await engine.dispose()
-
-
-async def main():
+async def main() -> None:
     bot = Bot(token=BOT_TOKEN)
-    dp = Dispatcher(storage=MemoryStorage())
+    storage = build_storage()
+    dp = Dispatcher(storage=storage)
+
+    # Антиспам выполняется раньше проверки доступа.
+    dp.message.outer_middleware(RateLimitMiddleware())
+    dp.callback_query.outer_middleware(RateLimitMiddleware())
 
     dp.message.middleware(SubscriptionMiddleware())
     dp.callback_query.middleware(SubscriptionMiddleware())
 
     dp.startup.register(on_startup)
-    dp.shutdown.register(on_shutdown)
 
     from handlers.user import router as user_router
     from handlers.admin import router as admin_router
@@ -40,8 +87,14 @@ async def main():
     dp.include_router(user_router)
     dp.include_router(admin_router)
 
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+    try:
+        await bot.delete_webhook(drop_pending_updates=DROP_PENDING_UPDATES)
+        await dp.start_polling(bot, close_bot_session=False)
+    finally:
+        logger.info("Бот остановлен")
+        await storage.close()
+        await engine.dispose()
+        await bot.session.close()
 
 
 if __name__ == "__main__":

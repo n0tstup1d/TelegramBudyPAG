@@ -4,6 +4,7 @@ from sqlalchemy import select
 
 from database.engine import async_session
 from database.models import Shop, ShopClick
+from database.settings import is_shops_enabled
 from keyboards.user.shops import shops_menu, shop_card_menu
 
 router = Router()
@@ -12,6 +13,11 @@ router = Router()
 @router.callback_query(F.data == "section:shops")
 async def show_shops(callback: CallbackQuery):
     async with async_session() as session:
+        shops_enabled = await is_shops_enabled(session)
+        if not shops_enabled:
+            await callback.answer("Раздел магазинов сейчас скрыт", show_alert=True)
+            return
+
         result = await session.execute(
             select(Shop).where(Shop.is_active == True)
         )
@@ -37,6 +43,9 @@ async def show_shop(callback: CallbackQuery):
     shop_id = int(callback.data.split(":")[1])
 
     async with async_session() as session:
+        if not await is_shops_enabled(session):
+            await callback.answer("Раздел магазинов сейчас скрыт", show_alert=True)
+            return
         shop = await session.get(Shop, shop_id)
 
         if not shop:
@@ -57,6 +66,9 @@ async def shop_click(callback: CallbackQuery):
     shop_id = int(callback.data.split(":")[1])
 
     async with async_session() as session:
+        if not await is_shops_enabled(session):
+            await callback.answer("Раздел магазинов сейчас скрыт", show_alert=True)
+            return
         shop = await session.get(Shop, shop_id)
 
         if not shop:

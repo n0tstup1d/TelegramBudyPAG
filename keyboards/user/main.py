@@ -11,13 +11,14 @@ SECTIONS = {
 }
 
 
-def main_menu(referral_enabled: bool = True) -> InlineKeyboardMarkup:
+def main_menu(referral_enabled: bool = False, shops_enabled: bool = False) -> InlineKeyboardMarkup:
     """Главное inline-меню: только продуктовый контент.
 
     Профиль, помощь и контакты вынесены в нижнюю reply-клавиатуру.
     `referral_enabled` оставлен для совместимости со старыми вызовами.
+    `shops_enabled` управляет видимостью кнопки магазинов в пользовательском меню.
     """
-    return InlineKeyboardMarkup(inline_keyboard=[
+    rows = [
         [
             InlineKeyboardButton(text="💤 Сон", callback_data="section:sleep"),
             InlineKeyboardButton(text="🥗 Питание", callback_data="section:nutrition"),
@@ -28,5 +29,9 @@ def main_menu(referral_enabled: bool = True) -> InlineKeyboardMarkup:
         ],
         [InlineKeyboardButton(text="🏃 Восстановление", callback_data="section:recovery")],
         [InlineKeyboardButton(text="📊 Анализы и мониторинг", callback_data="section:analytics")],
-        [InlineKeyboardButton(text="🏪 Магазины БАДов", callback_data="section:shops")],
-    ])
+    ]
+
+    if shops_enabled:
+        rows.append([InlineKeyboardButton(text="🏪 Магазины БАДов", callback_data="section:shops")])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)

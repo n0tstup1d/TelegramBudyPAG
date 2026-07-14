@@ -8,6 +8,7 @@ from .broadcast import router as broadcast_router
 from .users import router as users_router
 from .promos import router as promos_router
 from .shops import router as shops_router
+from .settings import router as settings_router
 
 router = Router()
 
@@ -19,3 +20,4 @@ router.include_router(broadcast_router)
 router.include_router(users_router)
 router.include_router(promos_router)
 router.include_router(shops_router)
+router.include_router(settings_router)

@@ -13,7 +13,14 @@ from database.crud import get_user
 from database.engine import async_session
 from database.models import SupportTicket, SupportMessageLink
 from keyboards.common import support_cancel_keyboard, bottom_keyboard, support_keyboard
-from services.navigation import get_main_menu_markup, SUPPORT_CENTER_TEXT
+from services.navigation import get_main_menu_markup, SUPPORT_CENTER_TEXT, send_home
+from services.permissions import is_staff_role
+from services.support_policy import (
+    CONTENT_SUPPORT_NOTICE,
+    STAFF_CONTENT_WARNING,
+    STAFF_SAFE_REPLY_TEMPLATE,
+    validate_support_message,
+)
 from states.user import SupportStates
 
 router = Router()
@@ -31,7 +38,7 @@ NAV_TEXTS = {"🏠 Меню", "🏠 Главное меню", "👤 Профил
 async def is_staff_user(user_id: int) -> bool:
     async with async_session() as session:
         user = await get_user(session, user_id)
-        return bool(user and user.role in ("admin", "moderator"))
+        return bool(user and is_staff_role(user.role))
 
 
 def format_exception(exc: Exception) -> str:
@@ -124,10 +131,19 @@ async def support_check(message: Message):
     await message.answer(text, parse_mode="HTML")
 
 
-def staff_ticket_keyboard(ticket_id: int) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Закрыть обращение", callback_data=f"support_admin:close:{ticket_id}")]
+def staff_ticket_keyboard(ticket_id: int, category: str) -> InlineKeyboardMarkup:
+    rows = []
+    if category == "content":
+        rows.append([
+            InlineKeyboardButton(
+                text="🧭 Отправить безопасный шаблон",
+                callback_data=f"support_admin:safe_reply:{ticket_id}",
+            )
+        ])
+    rows.append([
+        InlineKeyboardButton(text="✅ Закрыть обращение", callback_data=f"support_admin:close:{ticket_id}")
     ])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def user_reply_keyboard(category: str) -> InlineKeyboardMarkup:
@@ -152,13 +168,35 @@ def make_topic_name(ticket_id: int, user, category: str) -> str:
 
 
 def ticket_header(ticket: SupportTicket, user, label: str) -> str:
-    return (
+    text = (
         f"📩 Обращение #{ticket.id} • {label}\n"
         f"👤 {user_display_name(user)}\n"
         f"ID: <code>{ticket.user_id}</code>\n\n"
         "Это отдельная тема клиента. Пиши ответ прямо в эту тему — "
         "пользователь получит его в личный чат с ботом от лица проекта."
     )
+    if ticket.category == "content":
+        text += f"\n\n{STAFF_CONTENT_WARNING}"
+    return text
+
+
+async def close_open_ticket_for_user(user_id: int, category: str) -> None:
+    async with async_session() as session:
+        result = await session.execute(
+            select(SupportTicket)
+            .where(
+                SupportTicket.user_id == user_id,
+                SupportTicket.category == category,
+                SupportTicket.status == "open",
+            )
+            .order_by(SupportTicket.id.desc())
+        )
+        ticket = result.scalar_one_or_none()
+        if ticket:
+            ticket.status = "closed"
+            ticket.closed_at = datetime.now()
+            ticket.last_message_at = datetime.now()
+            await session.commit()
 
 
 async def get_or_create_ticket(session, user_id: int, category: str) -> SupportTicket:
@@ -239,9 +277,14 @@ async def start_support_dialog(callback: CallbackQuery, state: FSMContext):
     await state.set_state(SupportStates.waiting_message)
     await state.update_data(category=category)
 
+    prompt = f"{label}\n\nНапиши сообщение сюда, в чат с ботом."
+    if category == "content":
+        prompt += f"\n\n⚠️ {CONTENT_SUPPORT_NOTICE}"
+    else:
+        prompt += "\n\nМожно отправить текст или один скриншот. Не отправляй пароли, коды и банковские данные."
+
     await callback.message.edit_text(
-        f"{label}\n\n"
-        "Напиши сообщение сюда, в чат с ботом.\n",
+        prompt,
         reply_markup=support_cancel_keyboard(),
     )
 
@@ -249,6 +292,8 @@ async def start_support_dialog(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "support:user_close")
 async def close_user_support_dialog(callback: CallbackQuery, state: FSMContext):
     await callback.answer("Обращение закрыто")
+    data = await state.get_data()
+    await close_open_ticket_for_user(callback.from_user.id, data.get("category", "support"))
     await state.clear()
     await callback.message.edit_text(
         "✅ Обращение закрыто.\n\n"
@@ -262,9 +307,11 @@ async def close_user_support_dialog(callback: CallbackQuery, state: FSMContext):
 @router.message(SupportStates.waiting_message)
 async def receive_user_support_message(message: Message, state: FSMContext):
     if message.text in NAV_TEXTS:
+        data = await state.get_data()
+        await close_open_ticket_for_user(message.from_user.id, data.get("category", "support"))
         await state.clear()
         if message.text in {"🏠 Меню", "🏠 Главное меню"}:
-            await message.answer("👋 Выбери направление:", reply_markup=await get_main_menu_markup())
+            await send_home(message)
         elif message.text in {"🛠 Поддержка", "🛠 Тех. поддержка"}:
             await message.answer(SUPPORT_CENTER_TEXT, reply_markup=support_keyboard())
         else:
@@ -274,6 +321,11 @@ async def receive_user_support_message(message: Message, state: FSMContext):
     data = await state.get_data()
     category = data.get("category", "support")
     label = CATEGORY_LABELS.get(category, CATEGORY_LABELS["support"])
+
+    valid, error_text = validate_support_message(message, category)
+    if not valid:
+        await message.answer(f"⚠️ {error_text}", reply_markup=support_cancel_keyboard())
+        return
 
     async with async_session() as session:
         user = await get_user(session, message.from_user.id)
@@ -313,7 +365,7 @@ async def receive_user_support_message(message: Message, state: FSMContext):
                 f"{header}\n\n<b>Сообщение пользователя:</b>\n{escape(message.text)}",
                 message_thread_id=thread_id,
                 parse_mode="HTML",
-                reply_markup=staff_ticket_keyboard(ticket.id),
+                reply_markup=staff_ticket_keyboard(ticket.id, ticket.category),
             )
             await save_staff_message_link(
                 session=session,
@@ -329,7 +381,7 @@ async def receive_user_support_message(message: Message, state: FSMContext):
                 f"{header}\n\n<b>Сообщение пользователя:</b>",
                 message_thread_id=thread_id,
                 parse_mode="HTML",
-                reply_markup=staff_ticket_keyboard(ticket.id),
+                reply_markup=staff_ticket_keyboard(ticket.id, ticket.category),
             )
             await save_staff_message_link(
                 session=session,
@@ -396,8 +448,16 @@ async def find_ticket_for_staff_message(session, message: Message) -> SupportTic
 
 @router.message(F.chat.id == SUPPORT_DIALOG_CHAT_ID)
 async def receive_staff_topic_message(message: Message):
-    """Любое сообщение сотрудника в теме обращения отправляется пользователю."""
-    if message.from_user and message.from_user.is_bot:
+    """Только сообщение администратора/модератора отправляется пользователю."""
+    if not message.from_user or message.from_user.is_bot:
+        return
+
+    if not await is_staff_user(message.from_user.id):
+        logger.warning(
+            "Blocked non-staff support reply: user_id=%s chat_id=%s",
+            message.from_user.id,
+            message.chat.id,
+        )
         return
 
     if message.text and message.text.startswith("/"):
@@ -450,10 +510,55 @@ async def receive_staff_topic_message(message: Message):
     await message.reply("✅ Ответ отправлен пользователю")
 
 
+@router.callback_query(F.data.startswith("support_admin:safe_reply:"))
+async def send_safe_reply_from_staff(callback: CallbackQuery):
+    if callback.message.chat.id != SUPPORT_DIALOG_CHAT_ID:
+        await callback.answer("Недоступно", show_alert=True)
+        return
+
+    if not await is_staff_user(callback.from_user.id):
+        await callback.answer("Отправлять ответы может только команда", show_alert=True)
+        return
+
+    ticket_id = int(callback.data.split(":")[2])
+    async with async_session() as session:
+        ticket = await session.get(SupportTicket, ticket_id)
+        if not ticket or ticket.status != "open":
+            await callback.answer("Обращение не найдено или уже закрыто", show_alert=True)
+            return
+
+        try:
+            sent = await callback.bot.send_message(
+                ticket.user_id,
+                "💬 Ответ команды:\n\n" + STAFF_SAFE_REPLY_TEMPLATE,
+                reply_markup=user_reply_keyboard(ticket.category),
+            )
+        except Exception as exc:
+            await callback.answer(f"Не удалось отправить: {exc}", show_alert=True)
+            return
+
+        ticket.last_message_at = datetime.now()
+        session.add(SupportMessageLink(
+            ticket_id=ticket.id,
+            user_id=ticket.user_id,
+            staff_chat_id=callback.message.chat.id,
+            staff_message_id=callback.message.message_id,
+            user_message_id=sent.message_id,
+            direction="staff_to_user_template",
+        ))
+        await session.commit()
+
+    await callback.answer("Безопасный шаблон отправлен")
+
+
 @router.callback_query(F.data.startswith("support_admin:close:"))
 async def close_ticket_from_staff(callback: CallbackQuery):
     if callback.message.chat.id != SUPPORT_DIALOG_CHAT_ID:
         await callback.answer("Недоступно", show_alert=True)
+        return
+
+    if not await is_staff_user(callback.from_user.id):
+        await callback.answer("Закрывать обращения может только команда", show_alert=True)
         return
 
     await callback.answer()

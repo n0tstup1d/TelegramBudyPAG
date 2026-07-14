@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
-def profile_keyboard(referral_enabled: bool = True) -> InlineKeyboardMarkup:
+def profile_keyboard(referral_enabled: bool = False) -> InlineKeyboardMarkup:
     buttons = []
 
     if referral_enabled:

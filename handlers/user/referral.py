@@ -1,4 +1,5 @@
 from aiogram import Router, F
+import re
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
@@ -82,7 +83,8 @@ async def show_referral(callback: CallbackQuery):
             f"⏳ В обработке: {balance.frozen} ₽\n\n"
             f"{withdraw_status}\n\n"
             f"🔗 Твоя ссылка для приглашения:\n{ref_link}\n\n"
-            f"Отправь эту ссылку другу. Когда он зарегистрируется по ней, он будет привязан к тебе как реферал."
+            f"Отправь эту ссылку другу. Привязка по ссылке сама по себе не означает начисление: "
+            f"вознаграждение учитывается только после подтверждённой оплаты и проверки правил программы."
         )
     else:
         text = (
@@ -106,6 +108,9 @@ async def show_referral(callback: CallbackQuery):
 @router.callback_query(F.data == "withdraw:not_enough")
 async def withdraw_not_enough(callback: CallbackQuery):
     async with async_session() as session:
+        if not await is_referral_enabled(session):
+            await safe_callback_answer(callback, "Реферальная система сейчас отключена.", show_alert=True)
+            return
         min_w = await get_min_withdrawal(session)
         balance = await get_or_create_balance(session, callback.from_user.id)
 
@@ -146,19 +151,39 @@ async def withdraw_start(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text(
             f"💸 Заявка на вывод\n\n"
             f"Сумма к выводу: {balance.balance} ₽\n\n"
-            f"Напиши номер карты или номер телефона для СБП:\n"
-            f"например: 79001234567 или 4276 1234 5678 9012",
-            reply_markup=withdraw_cancel_keyboard()
+            "Напиши номер телефона, привязанный к СБП.\n"
+            "Не отправляй номер банковской карты, срок действия, CVC/CVV, коды из SMS или пароль.\n\n"
+            "Пример: +7 900 123-45-67",
+            reply_markup=withdraw_cancel_keyboard(),
         )
 
 
 @router.message(WithdrawStates.waiting_for_requisites)
 async def withdraw_requisites(message: Message, state: FSMContext):
-    requisites = message.text.strip()
+    if not message.text:
+        await message.answer("Укажи номер телефона для СБП текстом.", reply_markup=withdraw_cancel_keyboard())
+        return
+
+    digits = re.sub(r"\D", "", message.text)
+    if len(digits) == 11 and digits.startswith("8"):
+        digits = "7" + digits[1:]
+    if len(digits) != 11 or not digits.startswith("7"):
+        await message.answer(
+            "Не удалось распознать российский номер телефона. Укажи номер в формате +7 900 123-45-67. "
+            "Номер карты и коды подтверждения не отправляй.",
+            reply_markup=withdraw_cancel_keyboard(),
+        )
+        return
+
+    requisites = "+" + digits
     data = await state.get_data()
     amount = data.get("amount", 0)
 
     async with async_session() as session:
+        if not await is_referral_enabled(session):
+            await state.clear()
+            await message.answer("Реферальная система сейчас отключена.", reply_markup=after_withdraw_keyboard())
+            return
         balance = await get_or_create_balance(session, message.from_user.id)
         amount = balance.balance if balance.balance else amount
 

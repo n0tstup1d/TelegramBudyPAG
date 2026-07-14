@@ -93,7 +93,11 @@ async def admin_referral_toggle(callback: CallbackQuery):
     async with async_session() as session:
         await set_setting(session, "referral_enabled", value)
 
-    await safe_answer(callback, "✅ Настройка изменена")
+    notice = (
+        "Реферальная система включена. Проверь платёжное начисление и правила программы."
+        if value == "true" else "Реферальная система выключена."
+    )
+    await safe_answer(callback, notice, show_alert=value == "true")
     await admin_referral(callback)
 
 

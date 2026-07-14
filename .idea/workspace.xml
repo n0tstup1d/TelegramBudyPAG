@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c058ddb1-8d52-489a-b780-bce4bd759989" name="Changes" comment="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/supplements.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/supplements.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/admin.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/admin/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/admin/guards.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/guards.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/admin/referral.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/referral.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/content.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/profile.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/shops.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/start.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/user/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/user/referral.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/referral.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/user/shops.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/shops.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/user/start.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/start.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/user/support.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/support.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keyboards/admin/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/admin/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keyboards/common.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/common.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keyboards/user/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/user/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keyboards/user/profile.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/user/profile.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keyboards/user/referral.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/user/referral.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middlewares/subscription.py" beforeDir="false" afterPath="$PROJECT_DIR$/middlewares/subscription.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/project_check.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/project_check.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/navigation.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/navigation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/notifications.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/notifications.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;n0tstup1d&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/n0tstup1d/TelegramBudyPAG.git&quot;,
+    &quot;accountId&quot;: &quot;61fc9ea6-faaa-4be9-a49f-7dbdf5cb33ee&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="3FyzbZyOmyEQTSxur48mgz1s60h" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.crud.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/GERMAN/PycharmProjects/TelegramBudyPAG/data/supplements&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\GERMAN\PycharmProjects\TelegramBudyPAG\data\supplements" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\GERMAN\PycharmProjects\TelegramBudyPAG\utils" />
+      <recent name="C:\Users\GERMAN\PycharmProjects\TelegramBudyPAG\data\supplements" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="TelegramBudyPAG" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.14 (TelegramBudyPAG)" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/database" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.main" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-ca5e2b39c7df-6e1f45a539f7-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.29346.308" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c058ddb1-8d52-489a-b780-bce4bd759989" name="Changes" comment="" />
+      <created>1783062169933</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1783062169933</updated>
+    </task>
+    <task id="LOCAL-00001" summary="1 версия. Без оплаты. Без рефакторинга. Без тестирования">
+      <option name="closed" value="true" />
+      <created>1783582524119</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1783582524119</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
+      <option name="closed" value="true" />
+      <created>1783667942468</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1783667942468</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
+      <option name="closed" value="true" />
+      <created>1783684971927</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1783684971927</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
+      <option name="closed" value="true" />
+      <created>1783684999159</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1783684999160</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
+      <option name="closed" value="true" />
+      <created>1783686453609</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1783686453609</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
+      <option name="closed" value="true" />
+      <created>1783686739563</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1783686739563</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
+      <option name="closed" value="true" />
+      <created>1783841904172</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1783841904172</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="1 версия. Без оплаты. Без рефакторинга. Без тестирования" />
+    <MESSAGE value="Версия для тестов 0.2. БЕЗ ОПЛАТЫ" />
+    <option name="LAST_COMMIT_MESSAGE" value="Версия для тестов 0.2. БЕЗ ОПЛАТЫ" />
+  </component>
+</project>

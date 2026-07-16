@@ -14,6 +14,7 @@ from config import (
     DROP_PENDING_UPDATES,
     REDIS_URL,
     PAYMENTS_ENABLED,
+    RECEIPT_REMINDERS_ENABLED,
     CONTENT_MARK_SECRET,
     CONTENT_PROTECTION_ENABLED,
 )
@@ -103,19 +104,24 @@ async def main() -> None:
     dp.include_router(user_router)
     dp.include_router(admin_router)
 
-    payment_task = None
+    background_tasks: list[asyncio.Task] = []
     if PAYMENTS_ENABLED:
         from services.payments import payment_reconciliation_loop
-        payment_task = asyncio.create_task(payment_reconciliation_loop(bot))
+        background_tasks.append(asyncio.create_task(payment_reconciliation_loop(bot)))
+
+        if RECEIPT_REMINDERS_ENABLED:
+            from services.receipts import receipt_reminder_loop
+            background_tasks.append(asyncio.create_task(receipt_reminder_loop(bot)))
 
     try:
         await bot.delete_webhook(drop_pending_updates=DROP_PENDING_UPDATES)
         await dp.start_polling(bot, close_bot_session=False)
     finally:
-        if payment_task:
-            payment_task.cancel()
+        for task in background_tasks:
+            task.cancel()
+        for task in background_tasks:
             try:
-                await payment_task
+                await task
             except asyncio.CancelledError:
                 pass
         logger.info("Бот остановлен")

@@ -38,13 +38,42 @@ def user_card_menu(
     has_subscription: bool,
     role: str,
     content_blocked: bool = False,
+    has_payments: bool = False,
+    latest_transaction_id: int | None = None,
+    latest_payment_paid: bool = False,
 ) -> InlineKeyboardMarkup:
     buttons = []
 
+    if has_payments:
+        buttons.append([
+            InlineKeyboardButton(
+                text="🔄 Проверить последний платёж",
+                callback_data=f"admin:payment_check:{user_id}",
+            )
+        ])
+        buttons.append([
+            InlineKeyboardButton(
+                text="📋 История платежей",
+                callback_data=f"admin:payment_history:{user_id}",
+            )
+        ])
+        if latest_transaction_id is not None and latest_payment_paid:
+            buttons.append([
+                InlineKeyboardButton(
+                    text="🧾 Чек по последней оплате",
+                    callback_data=f"admin:receipt:{latest_transaction_id}",
+                )
+            ])
+
     if has_subscription:
-        buttons.append([InlineKeyboardButton(text="❌ Забрать подписку", callback_data=f"admin:sub_remove:{user_id}")])
+        buttons.append([InlineKeyboardButton(text="❌ Забрать доступ", callback_data=f"admin:sub_remove:{user_id}")])
     else:
-        buttons.append([InlineKeyboardButton(text="✅ Выдать подписку", callback_data=f"admin:sub_give:{user_id}")])
+        buttons.append([
+            InlineKeyboardButton(
+                text="✅ Выдать доступ вручную",
+                callback_data=f"admin:sub_confirm:{user_id}",
+            )
+        ])
 
     if content_blocked:
         buttons.append([
@@ -64,6 +93,30 @@ def user_card_menu(
     buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="admin:users")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def manual_access_confirm_menu(user_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="✅ Да, выдать доступ",
+                callback_data=f"admin:sub_give:{user_id}",
+            )
+        ],
+        [InlineKeyboardButton(text="❌ Отмена", callback_data=f"admin:user_card:{user_id}")],
+    ])
+
+
+def payment_history_menu(user_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="🔄 Проверить последний платёж",
+                callback_data=f"admin:payment_check:{user_id}",
+            )
+        ],
+        [InlineKeyboardButton(text="⬅️ К пользователю", callback_data=f"admin:user_card:{user_id}")],
+    ])
 
 
 def role_menu(user_id: int) -> InlineKeyboardMarkup:

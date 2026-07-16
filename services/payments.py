@@ -10,7 +10,6 @@ from aiogram import Bot
 from sqlalchemy import select
 
 from config import (
-    PRODUCT_PRICE,
     PROJECT_NAME,
     TEAM_CHAT_ID,
     YOOKASSA_POLL_BATCH_SIZE,
@@ -18,7 +17,9 @@ from config import (
 )
 from database.engine import async_session
 from database.models import Transaction, User
+from keyboards.admin.receipts import receipt_team_notification_menu
 from keyboards.common import bottom_keyboard
+from services.receipts import RECEIPT_NOT_REQUIRED, ensure_receipt_pending
 from services.yookassa import YooKassaError, amount_value, get_payment
 
 logger = logging.getLogger(__name__)
@@ -34,13 +35,13 @@ class PaymentProcessingResult:
     confirmation_url: str = ""
 
 
-def _payment_amount_matches(payment: dict) -> bool:
+def _payment_amount_matches(payment: dict, expected_amount: int) -> bool:
     amount = payment.get("amount") or {}
     try:
         value = Decimal(str(amount.get("value")))
     except (InvalidOperation, TypeError, ValueError):
         return False
-    return value == Decimal(amount_value(PRODUCT_PRICE)) and amount.get("currency") == "RUB"
+    return value == Decimal(amount_value(expected_amount)) and amount.get("currency") == "RUB"
 
 
 def _metadata_user_id(payment: dict) -> int | None:
@@ -88,6 +89,11 @@ async def process_payment(
             raise YooKassaError("Платёж принадлежит другому пользователю")
 
         if transaction.paid:
+            # Защита от старых записей: любой успешный платёж должен попасть
+            # в очередь ручного формирования чека.
+            if transaction.receipt_status == RECEIPT_NOT_REQUIRED:
+                await ensure_receipt_pending(transaction)
+                await session.commit()
             return PaymentProcessingResult(
                 payment_id,
                 transaction.status or "succeeded",
@@ -102,7 +108,7 @@ async def process_payment(
             raise YooKassaError("В платеже не совпадает Telegram ID покупателя")
         if metadata.get("product") != "vega_lifetime_access":
             raise YooKassaError("Платёж относится к другому продукту")
-        if not _payment_amount_matches(payment) or transaction.amount != PRODUCT_PRICE:
+        if not _payment_amount_matches(payment, transaction.amount):
             raise YooKassaError("В платеже не совпадает сумма или валюта")
 
         transaction.status = api_status
@@ -133,10 +139,13 @@ async def process_payment(
         transaction.paid = True
         transaction.status = "succeeded"
         transaction.updated_at = datetime.now()
+        await ensure_receipt_pending(transaction)
         await session.commit()
 
+        transaction_id = transaction.id
         user_id = user.user_id
         username = user.username
+        paid_amount = transaction.amount
 
     if notify_user:
         try:
@@ -145,7 +154,9 @@ async def process_payment(
                 "✅ <b>Оплата подтверждена</b>\n\n"
                 f"Бессрочный доступ к {PROJECT_NAME} открыт. "
                 "Подписки и повторных списаний нет.\n\n"
-                "Нажми «🏠 Меню», чтобы перейти к материалам.",
+                "🧾 Чек будет сформирован и направлен вам отдельным сообщением "
+                "после обработки платежа.\n\n"
+                "Нажмите «🏠 Меню», чтобы перейти к материалам.",
                 parse_mode="HTML",
                 reply_markup=bottom_keyboard(),
             )
@@ -159,10 +170,12 @@ async def process_payment(
                 "💳 <b>Успешная оплата ЮKassa</b>\n\n"
                 f"Пользователь: {username_text}\n"
                 f"Telegram ID: <code>{user_id}</code>\n"
-                f"Сумма: <b>{PRODUCT_PRICE} ₽</b>\n"
+                f"Сумма: <b>{paid_amount} ₽</b>\n"
                 f"Платёж: <code>{payment_id}</code>\n"
-                f"Доступ: {'открыт' if access_granted else 'уже был активен'}",
+                f"Доступ: {'открыт' if access_granted else 'уже был активен'}\n"
+                "Чек: <b>ожидает оформления</b>",
                 parse_mode="HTML",
+                reply_markup=receipt_team_notification_menu(transaction_id),
             )
         except Exception:
             logger.exception("Failed to notify team about successful payment %s", payment_id)

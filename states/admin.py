@@ -29,3 +29,10 @@ class ShopStates(StatesGroup):
     waiting_name = State()
     waiting_country = State()
     waiting_url = State()
+
+class ReceiptStates(StatesGroup):
+    waiting_link = State()
+    waiting_file = State()
+    confirming = State()
+    waiting_search = State()
+

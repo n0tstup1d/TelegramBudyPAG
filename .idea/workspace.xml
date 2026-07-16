@@ -1,24 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="c058ddb1-8d52-489a-b780-bce4bd759989" name="Changes" comment="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
+    <list default="true" id="c058ddb1-8d52-489a-b780-bce4bd759989" name="Changes" comment="Версия для тестов 0.2. ОПЛАТА ЮКАССА">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/admin/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handlers/admin/users.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/users.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/user/content.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/content.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/user/start.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/start.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handlers/user/storefront.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/storefront.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keyboards/admin/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/admin/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keyboards/admin/users.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/admin/users.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keyboards/common.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/common.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/keyboards/user/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/user/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/legal/oferta_vega.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/legal/oferta_vega.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/legal/privacy_policy_vega.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/legal/privacy_policy_vega.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/middlewares/subscription.py" beforeDir="false" afterPath="$PROJECT_DIR$/middlewares/subscription.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/apply_update.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/apply_update.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scripts/project_check.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/project_check.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_payment_placeholder.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/payments.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/payments.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/states/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/states/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_payment_integration.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_payment_integration.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -179,7 +176,31 @@
       <option name="project" value="LOCAL" />
       <updated>1783841904172</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Версия для тестов 0.2. ОПЛАТА ЮКАССА">
+      <option name="closed" value="true" />
+      <created>1784225050922</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1784225050922</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Версия для тестов 0.2. ОПЛАТА ЮКАССА">
+      <option name="closed" value="true" />
+      <created>1784225243408</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1784225243408</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Версия для тестов 0.2. ОПЛАТА ЮКАССА">
+      <option name="closed" value="true" />
+      <created>1784225379858</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1784225379858</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -196,6 +217,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="1 версия. Без оплаты. Без рефакторинга. Без тестирования" />
     <MESSAGE value="Версия для тестов 0.2. БЕЗ ОПЛАТЫ" />
-    <option name="LAST_COMMIT_MESSAGE" value="Версия для тестов 0.2. БЕЗ ОПЛАТЫ" />
+    <MESSAGE value="Версия для тестов 0.2. ОПЛАТА ЮКАССА" />
+    <option name="LAST_COMMIT_MESSAGE" value="Версия для тестов 0.2. ОПЛАТА ЮКАССА" />
   </component>
 </project>

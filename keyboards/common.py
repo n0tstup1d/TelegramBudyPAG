@@ -90,7 +90,7 @@ PAYMENT_PENDING_TEXT = (
 def yookassa_checkout_keyboard(payment_url: str, payment_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=f"💳 Оплатить {PRODUCT_PRICE} ₽", url=payment_url)],
-        [InlineKeyboardButton(text="✅ Проверить оплату", callback_data=f"payment:check:{payment_id}")],
+        [InlineKeyboardButton(text="✅ Я оплатил — проверить", callback_data=f"payment:check:{payment_id}")],
         [InlineKeyboardButton(text="⬅️ Назад к условиям", callback_data="store:back")],
         [InlineKeyboardButton(text="💬 Поддержка", callback_data="support:start:tech")],
     ])

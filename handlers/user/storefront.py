@@ -16,7 +16,6 @@ from config import (
     OFFER_FILE,
     OFFER_URL,
     PAYMENTS_ENABLED,
-    PAYMENT_PROVIDER_NAME,
     PRIVACY_FILE,
     PRIVACY_URL,
     PRODUCT_ACCESS_TEXT,
@@ -208,7 +207,9 @@ async def _start_checkout(message: Message, user_id: int, *, edit: bool) -> None
                 result = await process_payment(bot=message.bot, payment_id=payment_id, expected_user_id=user_id)
                 if result.paid:
                     await message.answer(
-                        "✅ Оплата уже подтверждена. Бессрочный доступ открыт.",
+                        "✅ Оплата уже подтверждена. Бессрочный доступ открыт.\n\n"
+                        "🧾 Чек будет сформирован и направлен вам отдельным сообщением "
+                        "после обработки платежа.",
                         reply_markup=bottom_keyboard(),
                     )
                     await message.answer("Выберите направление:", reply_markup=await get_main_menu_markup())
@@ -218,17 +219,19 @@ async def _start_checkout(message: Message, user_id: int, *, edit: bool) -> None
                 "💳 <b>Платёж создан</b>\n\n"
                 f"Продукт: бессрочный доступ к {escape(PROJECT_NAME)}\n"
                 f"Сумма: <b>{PRODUCT_PRICE} ₽</b>\n"
-                f"Платёжный сервис: <b>{escape(PAYMENT_PROVIDER_NAME)}</b>\n"
                 "Подписки и повторных списаний нет.\n\n"
                 "🛡 <b>Защита материалов</b>\n"
                 "Доступ предназначен одному пользователю для личного использования. Передача, "
                 "публикация и перепродажа запрещены. Материалы защищены от штатной пересылки "
                 "и содержат персональную лицензионную метку.\n\n"
-                "📈 <b>VEGA развивается</b>\n"
-                "В планах — психология, отношения и общение, мышление и развитие, обучение и навыки. "
-                "Новые направления будут добавляться постепенно; состав и порядок выхода могут меняться.\n\n"
-                "Нажмите «Оплатить». После успешной оплаты бот автоматически проверит статус и откроет доступ. "
-                "Кнопка «Проверить оплату» доступна как резервный вариант."
+                "<b>Как получить доступ:</b>\n"
+                f"1. Нажмите «Оплатить {PRODUCT_PRICE} ₽» и завершите оплату.\n"
+                "2. Вернитесь в бот.\n"
+                "3. Нажмите «✅ Я оплатил — проверить».\n\n"
+                "Обычно доступ открывается автоматически в течение 20–30 секунд. "
+                "Повторно оплачивать не нужно.\n\n"
+                "🧾 Чек будет сформирован и направлен вам отдельным сообщением "
+                "после обработки платежа."
             )
             markup = yookassa_checkout_keyboard(payment_url, payment_id)
             if edit:
@@ -316,7 +319,10 @@ async def payment_check_callback(callback: CallbackQuery):
     if result.paid:
         await _edit_or_answer(
             callback.message,
-            "✅ <b>Оплата подтверждена</b>\n\nБессрочный доступ к VEGA открыт.",
+            "✅ <b>Оплата подтверждена</b>\n\n"
+            "Бессрочный доступ к VEGA открыт.\n\n"
+            "🧾 Чек будет сформирован и направлен вам отдельным сообщением "
+            "после обработки платежа.",
         )
         await callback.message.answer(
             "Главное меню доступно на клавиатуре внизу.",
@@ -340,7 +346,7 @@ async def payment_check_callback(callback: CallbackQuery):
     )
     await _edit_or_answer(
         callback.message,
-        "⏳ Платёж пока не подтверждён. Если вы только что оплатили, подождите несколько секунд и проверьте снова.",
+        "⏳ <b>Платёж пока обрабатывается</b>\n\nПодождите 10–20 секунд и нажмите «✅ Я оплатил — проверить» ещё раз. Повторная оплата не требуется.",
         markup,
     )
 

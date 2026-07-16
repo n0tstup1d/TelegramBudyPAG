@@ -6,6 +6,7 @@ from .withdrawals import router as withdrawals_router
 from .referral import router as referral_router
 from .broadcast import router as broadcast_router
 from .users import router as users_router
+from .receipts import router as receipts_router
 from .promos import router as promos_router
 from .shops import router as shops_router
 from .settings import router as settings_router
@@ -18,6 +19,7 @@ router.include_router(withdrawals_router)
 router.include_router(referral_router)
 router.include_router(broadcast_router)
 router.include_router(users_router)
+router.include_router(receipts_router)
 router.include_router(promos_router)
 router.include_router(shops_router)
 router.include_router(settings_router)

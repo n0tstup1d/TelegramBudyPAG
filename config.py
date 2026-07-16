@@ -78,6 +78,17 @@ YOOKASSA_API_TIMEOUT_SECONDS = _env_int("YOOKASSA_API_TIMEOUT_SECONDS", default=
 YOOKASSA_POLL_INTERVAL_SECONDS = _env_int("YOOKASSA_POLL_INTERVAL_SECONDS", default=20)
 YOOKASSA_POLL_BATCH_SIZE = _env_int("YOOKASSA_POLL_BATCH_SIZE", default=25)
 
+# Ручное формирование чеков НПД и автоматический контроль очереди.
+RECEIPT_REMINDERS_ENABLED = _env_bool("RECEIPT_REMINDERS_ENABLED", default=True)
+RECEIPT_REMINDER_INTERVAL_SECONDS = _env_int("RECEIPT_REMINDER_INTERVAL_SECONDS", default=900)
+RECEIPT_FIRST_REMINDER_HOURS = _env_int("RECEIPT_FIRST_REMINDER_HOURS", default=2)
+RECEIPT_URGENT_REMINDER_HOURS = _env_int("RECEIPT_URGENT_REMINDER_HOURS", default=12)
+RECEIPT_OVERDUE_HOURS = _env_int("RECEIPT_OVERDUE_HOURS", default=24)
+RECEIPT_ITEM_NAME = (
+    os.getenv("RECEIPT_ITEM_NAME")
+    or "Предоставление бессрочного доступа к информационно-образовательной базе VEGA"
+).strip()
+
 BOT_PUBLIC_URL = os.getenv("BOT_PUBLIC_URL", "https://t.me/vega_top_bot")
 YOOKASSA_RETURN_URL = (os.getenv("YOOKASSA_RETURN_URL") or BOT_PUBLIC_URL).strip()
 OFFER_URL = (os.getenv("OFFER_URL") or "").strip()

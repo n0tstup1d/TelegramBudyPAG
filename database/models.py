@@ -38,6 +38,19 @@ class Transaction(Base):
     provider: Mapped[str] = mapped_column(String(32), default="yookassa")
     status: Mapped[str] = mapped_column(String(32), default="pending")
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    # Чек самозанятого формируется вручную в «Мой налог», а бот хранит
+    # очередь, доставляет ссылку/файл покупателю и фиксирует отправку.
+    receipt_status: Mapped[str] = mapped_column(String(24), default="not_required", nullable=False, index=True)
+    receipt_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    receipt_file_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    receipt_file_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    receipt_delivery_method: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    receipt_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    receipt_admin_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    receipt_reminder_level: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    receipt_updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 

@@ -24,6 +24,7 @@ class SubscriptionMiddleware(BaseMiddleware):
         "legal:",
         "support:start:",
         "support_admin:",
+        "payment:",
     )
 
     FREE_MESSAGE_TEXTS = {

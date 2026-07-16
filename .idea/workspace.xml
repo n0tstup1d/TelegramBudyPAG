@@ -2,34 +2,23 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c058ddb1-8d52-489a-b780-bce4bd759989" name="Changes" comment="Версия для тестов 0.2. БЕЗ ОПЛАТЫ">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/supplements.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/supplements.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/admin.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/admin/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/admin/guards.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/guards.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/admin/referral.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/referral.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/content.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/profile.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/shops.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/start.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/user/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/user/referral.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/referral.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/user/shops.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/shops.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/admin/users.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/admin/users.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/user/content.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/content.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handlers/user/start.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/start.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/handlers/user/support.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/support.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/keyboards/admin/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/admin/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/handlers/user/storefront.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/user/storefront.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keyboards/admin/users.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/admin/users.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keyboards/common.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/common.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keyboards/user/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/user/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/keyboards/user/profile.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/user/profile.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/keyboards/user/referral.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards/user/referral.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/legal/oferta_vega.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/legal/oferta_vega.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/legal/privacy_policy_vega.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/legal/privacy_policy_vega.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/middlewares/subscription.py" beforeDir="false" afterPath="$PROJECT_DIR$/middlewares/subscription.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/apply_update.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/apply_update.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scripts/project_check.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/project_check.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/navigation.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/navigation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/notifications.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/notifications.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_payment_placeholder.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

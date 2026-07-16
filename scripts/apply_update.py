@@ -17,7 +17,18 @@ OBSOLETE_FILES = [
     "handlers/profile.py",
     "handlers/shops.py",
     "handlers/start.py",
+    "README_PRODAMUS.md",
+    "tests/test_payment_placeholder.py",
+    "tests/test_prodamus_compliance.py",
 ]
+
+
+def _project_files(pattern: str):
+    ignored = {".venv", "venv", ".git", ".idea"}
+    for path in ROOT.rglob(pattern):
+        if any(part in ignored for part in path.relative_to(ROOT).parts):
+            continue
+        yield path
 
 
 def main() -> None:
@@ -28,14 +39,16 @@ def main() -> None:
             path.unlink()
             removed.append(relative)
 
-    for cache in ROOT.rglob("__pycache__"):
+    for cache in list(_project_files("__pycache__")):
         if cache.is_dir():
             shutil.rmtree(cache, ignore_errors=True)
             removed.append(str(cache.relative_to(ROOT)) + "/")
 
-    for bytecode in ROOT.rglob("*.py[co]"):
-        bytecode.unlink(missing_ok=True)
-        removed.append(str(bytecode.relative_to(ROOT)))
+    for pattern in ("*.pyc", "*.pyo"):
+        for bytecode in _project_files(pattern):
+            if bytecode.is_file():
+                bytecode.unlink(missing_ok=True)
+                removed.append(str(bytecode.relative_to(ROOT)))
 
     print("Очистка завершена.")
     if removed:

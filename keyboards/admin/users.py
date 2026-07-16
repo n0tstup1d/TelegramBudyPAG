@@ -33,13 +33,26 @@ def users_list_menu(users: list, category: str, page: int, total: int) -> Inline
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def user_card_menu(user_id: int, has_subscription: bool, role: str) -> InlineKeyboardMarkup:
+def user_card_menu(
+    user_id: int,
+    has_subscription: bool,
+    role: str,
+    content_blocked: bool = False,
+) -> InlineKeyboardMarkup:
     buttons = []
 
     if has_subscription:
         buttons.append([InlineKeyboardButton(text="❌ Забрать подписку", callback_data=f"admin:sub_remove:{user_id}")])
     else:
         buttons.append([InlineKeyboardButton(text="✅ Выдать подписку", callback_data=f"admin:sub_give:{user_id}")])
+
+    if content_blocked:
+        buttons.append([
+            InlineKeyboardButton(
+                text="🛡 Снять защитную паузу",
+                callback_data=f"admin:content_unblock:{user_id}",
+            )
+        ])
 
     buttons.append([InlineKeyboardButton(text="🎭 Изменить роль", callback_data=f"admin:role_change:{user_id}")])
     buttons.append([

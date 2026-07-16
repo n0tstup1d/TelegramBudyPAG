@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
@@ -6,8 +6,9 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy import select, func
 
 from database.engine import async_session
-from database.models import User
+from database.models import ContentProtectionState, ContentStat, User
 from database.crud import get_user
+from services.content_protection import clear_content_block, make_license_code
 from handlers.admin.guards import is_admin, is_superadmin
 from states.admin import AdminUserStates
 from keyboards.admin.users import users_menu, users_list_menu, user_card_menu, role_menu, find_user_menu
@@ -117,6 +118,31 @@ async def send_user_card(event, user: User):
 
     created = user.created_at.strftime("%d.%m.%Y")
     username = f"@{user.username}" if user.username else "нет"
+    now = datetime.now()
+
+    async with async_session() as session:
+        protection_state = await session.scalar(
+            select(ContentProtectionState).where(ContentProtectionState.user_id == user.user_id)
+        )
+        views_hour = int(await session.scalar(
+            select(func.count(ContentStat.id)).where(
+                ContentStat.user_id == user.user_id,
+                ContentStat.clicked_at >= now - timedelta(hours=1),
+            )
+        ) or 0)
+
+    content_blocked = bool(
+        protection_state
+        and protection_state.blocked_until
+        and protection_state.blocked_until > now
+    )
+    if content_blocked:
+        protection_text = f"⏳ до {protection_state.blocked_until:%d.%m.%Y %H:%M:%S}"
+    else:
+        protection_text = "✅ ограничений нет"
+
+    warning_count = int(protection_state.warning_count or 0) if protection_state else 0
+    last_reason = protection_state.last_reason if protection_state and protection_state.last_reason else "—"
 
     text = (
         f"👤 Пользователь\n\n"
@@ -125,10 +151,21 @@ async def send_user_card(event, user: User):
         f"Имя: {user.full_name}\n"
         f"Роль: {role_text}\n"
         f"Подписка: {sub_status}\n"
-        f"Дата регистрации: {created}"
+        f"Дата регистрации: {created}\n\n"
+        f"🛡 Защита контента\n"
+        f"Код лицензии: {make_license_code(user.user_id)}\n"
+        f"Открытий за час: {views_hour}\n"
+        f"Защитная пауза: {protection_text}\n"
+        f"Срабатываний: {warning_count}\n"
+        f"Последняя причина: {last_reason}"
     )
 
-    keyboard = user_card_menu(user.user_id, user.has_subscription, user.role)
+    keyboard = user_card_menu(
+        user.user_id,
+        user.has_subscription,
+        user.role,
+        content_blocked=content_blocked,
+    )
 
     if isinstance(event, Message):
         await event.answer(text, reply_markup=keyboard)
@@ -166,6 +203,21 @@ async def admin_sub_remove(callback: CallbackQuery):
     await callback.answer("❌ Подписка забрана")
     async with async_session() as session:
         user = await get_user(session, user_id)
+        await send_user_card(callback, user)
+
+
+@router.callback_query(F.data.startswith("admin:content_unblock:"))
+async def admin_content_unblock(callback: CallbackQuery):
+    if not await is_admin(callback.from_user.id):
+        return
+
+    user_id = int(callback.data.split(":")[2])
+    await clear_content_block(user_id)
+    await callback.answer("✅ Защитная пауза снята")
+
+    async with async_session() as session:
+        user = await get_user(session, user_id)
+    if user:
         await send_user_card(callback, user)
 
 

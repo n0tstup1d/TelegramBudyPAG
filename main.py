@@ -13,6 +13,9 @@ from config import (
     BOT_TOKEN,
     DROP_PENDING_UPDATES,
     REDIS_URL,
+    PAYMENTS_ENABLED,
+    CONTENT_MARK_SECRET,
+    CONTENT_PROTECTION_ENABLED,
 )
 from database.engine import async_session, engine
 from database.settings import apply_security_defaults
@@ -51,6 +54,12 @@ def build_storage() -> BaseStorage:
 
 
 async def on_startup(bot: Bot) -> None:
+    if CONTENT_PROTECTION_ENABLED and not CONTENT_MARK_SECRET:
+        logger.warning(
+            "CONTENT_MARK_SECRET не задан: коды лицензий временно используют BOT_TOKEN как fallback. "
+            "Для независимой защиты задайте отдельный длинный секрет в .env."
+        )
+
     async with async_session() as session:
         changed = await apply_security_defaults(session)
         if changed:
@@ -68,6 +77,13 @@ async def on_startup(bot: Bot) -> None:
 
 
 async def main() -> None:
+    if PAYMENTS_ENABLED:
+        from services.yookassa import is_yookassa_configured
+        if not is_yookassa_configured():
+            raise RuntimeError(
+                "PAYMENTS_ENABLED=true, но не заданы YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY"
+            )
+
     bot = Bot(token=BOT_TOKEN)
     storage = build_storage()
     dp = Dispatcher(storage=storage)
@@ -87,10 +103,21 @@ async def main() -> None:
     dp.include_router(user_router)
     dp.include_router(admin_router)
 
+    payment_task = None
+    if PAYMENTS_ENABLED:
+        from services.payments import payment_reconciliation_loop
+        payment_task = asyncio.create_task(payment_reconciliation_loop(bot))
+
     try:
         await bot.delete_webhook(drop_pending_updates=DROP_PENDING_UPDATES)
         await dp.start_polling(bot, close_bot_session=False)
     finally:
+        if payment_task:
+            payment_task.cancel()
+            try:
+                await payment_task
+            except asyncio.CancelledError:
+                pass
         logger.info("Бот остановлен")
         await storage.close()
         await engine.dispose()

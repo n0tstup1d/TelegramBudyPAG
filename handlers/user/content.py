@@ -1,18 +1,24 @@
 import json
 import os
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
 from keyboards.user.content import (
     section_menu, topic_menu, pages_menu,
     questions_menu, sources_menu, answer_menu,
 )
 from keyboards.user.main import SECTIONS
+from services.content_protection import (
+    check_and_record_content_access,
+    format_retry_after,
+    protect_text,
+)
 
 router = Router()
 
 # Telegram ограничивает текст сообщения примерно 4096 символами.
 # Берём запас, чтобы кнопки/служебная строка "Часть X/Y" не ломали отправку.
-MAX_TEXT_LENGTH = 3700
+MAX_TEXT_LENGTH = 3300
 QUESTIONS_PAGE_SIZE = 10
 
 
@@ -194,6 +200,59 @@ def make_safe_content(raw_content: dict) -> dict:
 CONTENT = load_content()
 
 
+async def _render_paid_content(
+    callback: CallbackQuery,
+    text: str,
+    reply_markup,
+    *,
+    content_id: str,
+) -> bool:
+    """Показывает платный материал в защищённом сообщении с персональной меткой."""
+    result = await check_and_record_content_access(
+        callback.message.bot,
+        callback.from_user,
+        content_id,
+    )
+    if not result.allowed:
+        await callback.answer(
+            "🛡 Защитная пауза: материалы открывались слишком быстро. "
+            f"Попробуйте снова через {format_retry_after(result.retry_after)}",
+            show_alert=True,
+        )
+        return False
+
+    protected_text = protect_text(text, callback.from_user.id)
+    message = callback.message
+
+    if getattr(message, "has_protected_content", False):
+        try:
+            await message.edit_text(protected_text, reply_markup=reply_markup)
+            await callback.answer()
+            return True
+        except TelegramBadRequest as exc:
+            if "message is not modified" in str(exc).lower():
+                await callback.answer()
+                return True
+            # Редко Telegram запрещает редактирование старого сообщения. Ниже отправим новое.
+
+    await message.answer(
+        protected_text,
+        reply_markup=reply_markup,
+        protect_content=True,
+    )
+    try:
+        await message.delete()
+    except TelegramBadRequest:
+        pass
+    await callback.answer()
+    return True
+
+
+def _topic_log_id(section_id: str, topic_id: str, topic: dict) -> str:
+    original_id = topic.get("_original_topic_id", topic_id) if isinstance(topic, dict) else topic_id
+    return f"{section_id}:{original_id}"
+
+
 @router.callback_query(F.data.startswith("section:"))
 async def show_section(callback: CallbackQuery):
     section_id = callback.data.split(":")[1]
@@ -203,11 +262,12 @@ async def show_section(callback: CallbackQuery):
         await callback.answer("Раздел пока пуст", show_alert=True)
         return
 
-    await callback.message.edit_text(
+    await _render_paid_content(
+        callback,
         f"{title}\n\nВыбери тему:",
-        reply_markup=section_menu(section_id, CONTENT)
+        section_menu(section_id, CONTENT),
+        content_id=f"section:{section_id}",
     )
-    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("topic:"))
@@ -223,11 +283,12 @@ async def show_topic(callback: CallbackQuery):
         return
 
     text, chunk, total_chunks = get_text_chunk(topic.get("short", ""), chunk)
-    await callback.message.edit_text(
+    await _render_paid_content(
+        callback,
         text,
-        reply_markup=topic_menu(section_id, topic_id, chunk, total_chunks)
+        topic_menu(section_id, topic_id, chunk, total_chunks),
+        content_id=f"topic:{_topic_log_id(section_id, topic_id, topic)}:chunk:{chunk}",
     )
-    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("page:"))
@@ -251,11 +312,12 @@ async def show_page(callback: CallbackQuery):
     page = max(0, min(page, len(pages) - 1))
     text, chunk, total_chunks = get_text_chunk(pages[page], chunk)
 
-    await callback.message.edit_text(
+    await _render_paid_content(
+        callback,
         text,
-        reply_markup=pages_menu(section_id, topic_id, page, len(pages), chunk, total_chunks)
+        pages_menu(section_id, topic_id, page, len(pages), chunk, total_chunks),
+        content_id=f"page:{_topic_log_id(section_id, topic_id, topic)}:{page}:chunk:{chunk}",
     )
-    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("questions:"))
@@ -270,11 +332,12 @@ async def show_questions(callback: CallbackQuery):
         await callback.answer("Вопросов пока нет", show_alert=True)
         return
 
-    await callback.message.edit_text(
+    await _render_paid_content(
+        callback,
         "❓ Выбери вопрос:",
-        reply_markup=questions_menu(section_id, topic_id, topic, page=page, page_size=QUESTIONS_PAGE_SIZE)
+        questions_menu(section_id, topic_id, topic, page=page, page_size=QUESTIONS_PAGE_SIZE),
+        content_id=f"questions:{_topic_log_id(section_id, topic_id, topic)}:list:{page}",
     )
-    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("question:"))
@@ -299,11 +362,15 @@ async def show_answer(callback: CallbackQuery):
     full_text = f"{question.get('question', '')}\n\n{question.get('answer', '')}"
     text, chunk, total_chunks = get_text_chunk(full_text, chunk)
 
-    await callback.message.edit_text(
+    await _render_paid_content(
+        callback,
         text,
-        reply_markup=answer_menu(section_id, topic_id, question_index, chunk, total_chunks, QUESTIONS_PAGE_SIZE)
+        answer_menu(section_id, topic_id, question_index, chunk, total_chunks, QUESTIONS_PAGE_SIZE),
+        content_id=(
+            f"question:{_topic_log_id(section_id, topic_id, topic)}:"
+            f"{question_index}:chunk:{chunk}"
+        ),
     )
-    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("sources:"))
@@ -341,8 +408,9 @@ async def show_sources(callback: CallbackQuery):
     full_text = "🔬 Источники:\n\n" + "\n\n".join(lines)
     text, chunk, total_chunks = get_text_chunk(full_text, chunk)
 
-    await callback.message.edit_text(
+    await _render_paid_content(
+        callback,
         text,
-        reply_markup=sources_menu(section_id, topic_id, chunk, total_chunks)
+        sources_menu(section_id, topic_id, chunk, total_chunks),
+        content_id=f"sources:{_topic_log_id(section_id, topic_id, topic)}:chunk:{chunk}",
     )
-    await callback.answer()

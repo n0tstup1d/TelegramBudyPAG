@@ -20,13 +20,24 @@ except Exception:
     pass
 DATA_DIR = ROOT / "data"
 
-REQUIRED_ENV = ["BOT_TOKEN", "DATABASE_URL", "TEAM_CHAT_ID", "USERS_CHAT_ID"]
+REQUIRED_ENV = [
+    "BOT_TOKEN", "DATABASE_URL", "TEAM_CHAT_ID", "USERS_CHAT_ID",
+    "SELLER_CITY",
+]
 OPTIONAL_ENV = [
+    "PAYMENTS_ENABLED",
+    "YOOKASSA_SHOP_ID",
+    "YOOKASSA_SECRET_KEY",
+    "YOOKASSA_RETURN_URL",
     "SUPPORT_DIALOG_CHAT_ID",
     "SUPPORT_URL",
     "CONTENT_URL",
     "PARTNERSHIP_URL",
     "REDIS_URL",
+    "CONTENT_PROTECTION_ENABLED",
+    "CONTENT_MARK_SECRET",
+    "CONTENT_VISIBLE_WATERMARK",
+    "CONTENT_HIDDEN_FINGERPRINT",
 ]
 
 CATEGORY_ALIASES = {
@@ -51,15 +62,33 @@ OBSOLETE_FILES = [
 def check_env() -> list[str]:
     lines = ["🔐 ENV"]
     for name in REQUIRED_ENV:
-        value = os.getenv(name)
-        lines.append(f"  {'✅' if value else '❌'} {name}")
+        value = (os.getenv(name) or "").strip()
+        invalid_placeholder = name == "SELLER_CITY" and value.upper() in {"УКАЖИТЕ_ГОРОД", "ВАШ_ГОРОД"}
+        ok = bool(value) and not invalid_placeholder
+        note = " — замените заглушку реальным городом" if invalid_placeholder else ""
+        lines.append(f"  {'✅' if ok else '❌'} {name}{note}")
+    payments_enabled = (os.getenv("PAYMENTS_ENABLED") or "").strip().lower() in {"1", "true", "yes", "on", "да"}
     for name in OPTIONAL_ENV:
         value = os.getenv(name)
         marker = "✅" if value else "⚠️"
         note = "" if value else " (не задано)"
         if name == "REDIS_URL" and not value:
             note += " — FSM будет теряться после перезапуска"
+        if payments_enabled and name in {"YOOKASSA_SHOP_ID", "YOOKASSA_SECRET_KEY"} and not value:
+            marker = "❌"
+            note += " — обязательно при PAYMENTS_ENABLED=true"
+        if name in {"YOOKASSA_SECRET_KEY", "CONTENT_MARK_SECRET"} and value:
+            note = " — задан (значение скрыто)"
+        if name == "CONTENT_MARK_SECRET" and not value:
+            note += " — будет использован fallback от BOT_TOKEN; для продакшена лучше отдельный секрет"
         lines.append(f"  {marker} {name}{note}")
+    protection_enabled = (os.getenv("CONTENT_PROTECTION_ENABLED") or "true").strip().lower() in {
+        "1", "true", "yes", "on", "да"
+    }
+    if protection_enabled:
+        lines.append("  ✅ защита платных материалов включена")
+    else:
+        lines.append("  ⚠️ защита платных материалов отключена")
     return lines
 
 
@@ -119,7 +148,11 @@ def check_files() -> list[str]:
     else:
         lines.append("  ✅ Устаревшие файлы удалены")
 
-    caches = list(ROOT.rglob("__pycache__"))
+    ignored = {".venv", "venv", ".git", ".idea"}
+    caches = [
+        path for path in ROOT.rglob("__pycache__")
+        if not any(part in ignored for part in path.parts)
+    ]
     lines.append(f"  {'⚠️' if caches else '✅'} __pycache__: {len(caches)}")
 
     try:
@@ -131,7 +164,17 @@ def check_files() -> list[str]:
 
 
 def check_compile() -> list[str]:
-    ok = compileall.compile_dir(ROOT, quiet=1, maxlevels=10)
+    targets = [
+        ROOT / "config.py", ROOT / "main.py", ROOT / "database", ROOT / "handlers",
+        ROOT / "keyboards", ROOT / "middlewares", ROOT / "services", ROOT / "states",
+        ROOT / "utils", ROOT / "scripts", ROOT / "tests", ROOT / "migrations",
+    ]
+    ok = True
+    for target in targets:
+        if target.is_file():
+            ok = compileall.compile_file(target, quiet=1) and ok
+        elif target.is_dir():
+            ok = compileall.compile_dir(target, quiet=1, maxlevels=10) and ok
     return ["🐍 Python", f"  {'✅' if ok else '❌'} py_compile"]
 
 
@@ -147,9 +190,7 @@ def check_tests() -> list[str]:
         tail = (result.stdout + "\n" + result.stderr).strip().splitlines()[-12:]
         lines.extend(f"    {line}" for line in tail)
     else:
-        skipped = "skipped" in (result.stdout + result.stderr).lower()
-        if skipped:
-            lines.append("  ⚠️ Платёжные тесты пропущены до подключения Robokassa")
+        lines.append("  ✅ тесты интеграции ЮKassa")
     return lines
 
 

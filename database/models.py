@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import (
     BigInteger, String, Boolean,
-    DateTime, Integer, func
+    DateTime, Integer, Index, func
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -35,6 +35,9 @@ class Transaction(Base):
     payment_id: Mapped[str] = mapped_column(String(128), nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     paid: Mapped[bool] = mapped_column(Boolean, default=False)
+    provider: Mapped[str] = mapped_column(String(32), default="yookassa")
+    status: Mapped[str] = mapped_column(String(32), default="pending")
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 
@@ -72,11 +75,31 @@ class ShopClick(Base):
 
 class ContentStat(Base):
     __tablename__ = "content_stats"
+    __table_args__ = (
+        Index("ix_content_stats_user_clicked_at", "user_id", "clicked_at"),
+        Index("ix_content_stats_content_id", "content_id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     content_id: Mapped[str] = mapped_column(String(128), nullable=False)
     clicked_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class ContentProtectionState(Base):
+    __tablename__ = "content_protection_states"
+
+    user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    warning_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_reason: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    last_alert_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
 
 class ReferralBalance(Base):

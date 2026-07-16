@@ -34,4 +34,6 @@ def main_menu(referral_enabled: bool = False, shops_enabled: bool = False) -> In
     if shops_enabled:
         rows.append([InlineKeyboardButton(text="🏪 Магазины БАДов", callback_data="section:shops")])
 
+    rows.append([InlineKeyboardButton(text="🗺 Развитие VEGA", callback_data="store:roadmap")])
+
     return InlineKeyboardMarkup(inline_keyboard=rows)

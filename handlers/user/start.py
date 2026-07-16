@@ -2,10 +2,12 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
 from sqlalchemy import select
+import logging
+from html import escape
 
 from database.crud import get_user, create_user, agree_to_terms
 from database.engine import async_session
-from database.models import User
+from database.models import Transaction, User
 from database.settings import is_referral_enabled
 from keyboards.common import (
     SUBSCRIPTION_REQUIRED_TEXT,
@@ -16,12 +18,55 @@ from keyboards.common import (
 from utils.notifications import notify_new_user
 from services.navigation import send_home, edit_home, send_support_center
 from services.access import has_access
+from services.payments import process_payment
+from services.yookassa import YooKassaError
+from config import (
+    PRODUCT_PRICE, PRODUCT_ACCESS_TEXT, SELLER_FULL_NAME, SELLER_CITY,
+    SELLER_INN, SELLER_EMAIL, SELLER_LICENSE_INFO,
+)
 
 router = Router()
+logger = logging.getLogger(__name__)
+
+
+async def _check_returned_payment(message: Message) -> None:
+    args = (message.text or "").split(maxsplit=1)
+    if len(args) < 2 or args[1].strip() != "payment_return":
+        return
+
+    async with async_session() as session:
+        payment_id = (
+            await session.execute(
+                select(Transaction.payment_id)
+                .where(
+                    Transaction.user_id == message.from_user.id,
+                    Transaction.provider == "yookassa",
+                    Transaction.paid.is_(False),
+                )
+                .order_by(Transaction.created_at.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+    if not payment_id:
+        return
+
+    try:
+        await process_payment(
+            bot=message.bot,
+            payment_id=payment_id,
+            expected_user_id=message.from_user.id,
+            notify_user=False,
+        )
+    except YooKassaError as exc:
+        logger.info("Payment return check is not ready for %s: %s", message.from_user.id, exc)
+    except Exception:
+        logger.exception("Payment return check failed for %s", message.from_user.id)
 
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
+    await _check_returned_payment(message)
     async with async_session() as session:
         referred_by = None
         referral_enabled = await is_referral_enabled(session)
@@ -72,12 +117,22 @@ async def cmd_start(message: Message):
                 "VEGA — пополняемая информационно-образовательная база. Сейчас доступны материалы "
                 "о сне, питании, физической активности, восстановлении, работе мозга, добавках "
                 "и мониторинге показателей.\n\n"
-                "В дальнейшем могут добавляться новые направления: психология, отношения, воспитание детей, "
-                "обучение, продуктивность и практические инструменты для повседневной жизни. "
-                "Будущие разделы не входят в гарантированный объём покупки, пока они не появились в боте.\n\n"
-                "До оплаты можно посмотреть описание продукта, цену, условия доступа, "
-                "публичную оферту, политику обработки данных и реквизиты продавца.\n\n"
-                "Для продолжения ознакомься с офертой и подтверди согласие.",
+                "📈 VEGA развивается постепенно. В планах — психология, отношения и общение, "
+                "мышление и развитие, обучение и навыки. Темы и порядок выхода могут меняться.\n\n"
+                "<b>Публичный прайс:</b>\n"
+                f"• полный доступ — <b>{PRODUCT_PRICE} ₽</b>;\n"
+                "• оплата единоразовая, 100% предоплата;\n"
+                f"• доступ — <b>{PRODUCT_ACCESS_TEXT}</b>;\n"
+                "• подписки и повторных списаний нет.\n\n"
+                "<b>Поставщик услуги:</b>\n"
+                f"{escape(SELLER_FULL_NAME)}, самозанятый\n"
+                f"Город: {escape(SELLER_CITY)}\n"
+                f"ИНН: <code>{escape(SELLER_INN)}</code>\n"
+                f"E-mail: <code>{escape(SELLER_EMAIL)}</code>\n"
+                f"Лицензия / аккредитация: {escape(SELLER_LICENSE_INFO)}\n\n"
+                "До оплаты можно посмотреть описание продукта, публичную оферту, политику обработки "
+                "данных, сведения о поставщике и способы связи. Для продолжения ознакомься с офертой "
+                "и подтверди согласие.",
                 parse_mode="HTML",
                 reply_markup=terms_keyboard(),
             )
